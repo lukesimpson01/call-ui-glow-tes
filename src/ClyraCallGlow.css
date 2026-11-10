@@ -4,7 +4,7 @@
   right: 0;
   bottom: 0;
   width: 100%;
-  height: clamp(190px, 31vh, 300px);
+  height: clamp(240px, 46vh, 560px);
   z-index: 30;
   pointer-events: none;
   overflow: hidden;
@@ -18,8 +18,8 @@
   will-change: opacity, transform;
   isolation: isolate;
   /* No hard rectangle at the top. */
-  -webkit-mask-image: linear-gradient(to top, black 0%, black 45%, rgba(0,0,0,.7) 70%, transparent 100%);
-  mask-image: linear-gradient(to top, black 0%, black 45%, rgba(0,0,0,.7) 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 55%, rgba(0,0,0,.7) 78%, transparent 100%);
+  mask-image: linear-gradient(to top, black 0%, black 55%, rgba(0,0,0,.7) 78%, transparent 100%);
 }
 .clyra-voice-glow--visible {
   opacity: 1;
@@ -50,10 +50,9 @@
   border: none;
   border-radius: 0;
   background: linear-gradient(to top,
-    rgba(9, 65, 195, .21) 0%,
-    rgba(24, 99, 244, .14) 27%,
-    rgba(51, 139, 255, .07) 52%,
-    rgba(76, 173, 255, .025) 75%,
+    rgba(23, 90, 255, .16) 0%,
+    rgba(40, 110, 255, .09) 27%,
+    rgba(70, 140, 255, .04) 52%,
     transparent 100%);
   -webkit-mask-image: linear-gradient(to top, black 0%, black 12%, transparent 100%);
   mask-image: linear-gradient(to top, black 0%, black 12%, transparent 100%);
