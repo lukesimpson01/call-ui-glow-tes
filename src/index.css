@@ -1,10 +1,11 @@
 :root {
+  color-scheme: only light;
   --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
     "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
   --ease: cubic-bezier(.22, 1, .36, 1);
   --ease-out: cubic-bezier(.4, 0, .2, 1);
 }
-html, body, #root { margin: 0; height: 100%; }
+html, body, #root { margin: 0; height: 100%; background: #fff; }
 body {
   background: #fff;
   overflow: hidden;
@@ -26,9 +27,9 @@ body {
   position: absolute; left: 0; right: 0; top: 50%;
   box-sizing: border-box; padding: 0 28px; text-align: center;
   transform: translateY(-58%);
-  animation: textIn 760ms var(--ease) both;
+  animation: textIn 900ms var(--ease) both;
 }
-.layer--out .state { animation: textOut 420ms var(--ease-out) both; }
+.layer--out .state { animation: textOut 520ms var(--ease-out) both; }
 .state h1 {
   margin: 0;
   font-weight: 600;
@@ -79,7 +80,7 @@ body {
   content: ""; display: block;
   width: 7px; height: 7px; border-radius: 4px;
   background: rgba(60, 60, 67, .28);
-  transition: background 380ms var(--ease-out), transform 520ms var(--ease);
+  transition: background 600ms var(--ease-out), transform 700ms var(--ease);
 }
 .dots button:hover::before { background: rgba(60, 60, 67, .5); }
 .dots button.on::before { background: #1d1d1f; transform: scale(1.25); }

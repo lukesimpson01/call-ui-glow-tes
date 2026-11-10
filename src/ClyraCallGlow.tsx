@@ -52,7 +52,7 @@ const EXIT_MS = 650;
 const LEVELS = {
   activated: 0.045, // thin line along the bottom
   listening: 0.105, // steady
-  thinking: 0.185, // + slow wobble, plus the moving waves from motion()
+  thinking: 0.06, // + slow wobble, plus the moving waves from motion()
   speakFloor: 0.105, // pauses settle to the listening height, never off
   speakRange: 0.55, // + voice amplitude on top
 };
@@ -151,8 +151,8 @@ export function ClyraCallGlow({
         Math.sin(now * 0.37 + 1.1) * 0.04 +
         Math.sin(now * 1.05 + 2.3) * 0.015;
     }
-    m.base += (baseTarget - m.base) * (1 - Math.exp(-dt * 3.2));
-    m.tts += ((p === "speaking" ? 1 : 0) - m.tts) * (1 - Math.exp(-dt * 9));
+    m.base += (baseTarget - m.base) * (1 - Math.exp(-dt * 2.2));
+    m.tts += ((p === "speaking" ? 1 : 0) - m.tts) * (1 - Math.exp(-dt * 6));
     // Closing: calm the waves before the fade completes.
     m.calm += ((openRef.current ? 1 : 0.15) - m.calm) * (1 - Math.exp(-dt * 5));
 
@@ -208,7 +208,7 @@ export function ClyraCallGlow({
       : { gather: 0, offset: 0, stretch: 0, heldLevel: 0 };
 
     // Slower ease out of thinking so the hand-off to listening/speaking is soft.
-    const ease = 1 - Math.exp(-dt * 2.4);
+    const ease = 1 - Math.exp(-dt * 1.6);
     state.gather += (target.gather - state.gather) * ease;
     state.offset += (target.offset - state.offset) * ease;
     state.stretch += (target.stretch - state.stretch) * ease;
@@ -245,6 +245,17 @@ export function ClyraCallGlow({
         "clyra-voice-glow" + (open ? " clyra-voice-glow--visible" : "")
       }
     >
+      {/* Thinking: soft blue waves gliding side to side (CSS transforms only). */}
+      <div
+        className={
+          "clyra-voice-glow__drift" +
+          (phase === "thinking" && open && !reducedMotion
+            ? " clyra-voice-glow__drift--on"
+            : "")
+        }
+      >
+        <i /> <i /> <i />
+      </div>
       <div className="clyra-voice-glow__beam">
         <VoiceBeam
           type="mobile"
@@ -273,8 +284,8 @@ export function ClyraCallGlow({
           sensitivity={3.1}
           threshold={0.012}
           // Tighter response while speaking so syllables read; calmer otherwise.
-          attack={speaking ? 0.06 : 0.09}
-          release={speaking ? 0.22 : 0.3}
+          attack={speaking ? 0.08 : 0.45}
+          release={speaking ? 0.28 : 0.8}
           idle={0.12}
           // Bands drive lobes only while talking; elsewhere the glow stays full-width.
           bands={phase === "speaking"}

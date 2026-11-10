@@ -57,7 +57,45 @@
   -webkit-mask-image: linear-gradient(to top, black 0%, black 12%, transparent 100%);
   mask-image: linear-gradient(to top, black 0%, black 12%, transparent 100%);
 }
+/* Side-to-side thinking waves. Each blob drifts at its own pace so the
+   motion never lines up or repeats. */
+.clyra-voice-glow__drift {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1100ms cubic-bezier(.22, 1, .36, 1);
+}
+.clyra-voice-glow__drift--on { opacity: 1; }
+.clyra-voice-glow__drift i {
+  position: absolute; bottom: -9vh;
+  left: 50%;
+  width: 78vw; height: 30vh;
+  margin-left: -39vw;
+  border-radius: 50%;
+  will-change: transform;
+  animation-timing-function: cubic-bezier(.45, 0, .55, 1);
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+.clyra-voice-glow__drift i:nth-child(1) {
+  background: radial-gradient(closest-side, rgba(36, 110, 255, .8), rgba(36, 110, 255, 0) 100%);
+  animation-name: driftA; animation-duration: 9s;
+}
+.clyra-voice-glow__drift i:nth-child(2) {
+  width: 64vw; margin-left: -32vw; height: 26vh;
+  background: radial-gradient(closest-side, rgba(90, 160, 255, .4), rgba(90, 160, 255, 0) 100%);
+  animation-name: driftB; animation-duration: 12s;
+}
+.clyra-voice-glow__drift i:nth-child(3) {
+  width: 90vw; margin-left: -45vw; height: 22vh;
+  background: radial-gradient(closest-side, rgba(23, 71, 201, .3), rgba(23, 71, 201, 0) 100%);
+  animation-name: driftC; animation-duration: 16s;
+}
+@keyframes driftA { from { transform: translate3d(-46vw, 0, 0) scaleY(.9); } to { transform: translate3d(46vw, -2vh, 0) scaleY(1.15); } }
+@keyframes driftB { from { transform: translate3d(18vw, -1vh, 0) scaleY(1.1); } to { transform: translate3d(-22vw, 1vh, 0) scaleY(.85); } }
+@keyframes driftC { from { transform: translate3d(-10vw, 0, 0) scaleY(1); } to { transform: translate3d(12vw, -3vh, 0) scaleY(1.2); } }
 @media (prefers-reduced-motion: reduce) {
+  .clyra-voice-glow__drift i { animation: none; }
   .clyra-voice-glow {
     transform: none;
     transition: opacity 160ms ease, visibility 0s linear 160ms;
