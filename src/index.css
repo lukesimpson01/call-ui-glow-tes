@@ -1,2 +1,50 @@
 html, body, #root { margin: 0; height: 100%; }
-body { background: #05070d; overflow: hidden; }
+body {
+  background: #05070d;
+  overflow: hidden;
+  color: #eaf2ff;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+.stage {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; outline: none;
+}
+.state {
+  text-align: center;
+  padding: 0 24px;
+  animation: stateIn 650ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.state h1 {
+  margin: 0;
+  font-weight: 300;
+  font-size: clamp(38px, 7vw, 68px);
+  letter-spacing: -0.02em;
+  background: linear-gradient(180deg, #fff 0%, #9cc6ff 100%);
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.state p {
+  margin: 12px 0 0;
+  font-size: clamp(15px, 2.2vw, 18px);
+  color: rgba(170, 200, 255, .62);
+  letter-spacing: .01em;
+}
+.state__dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 26px; }
+.state__dots span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(120, 160, 230, .25);
+  transition: background 400ms, transform 400ms;
+}
+.state__dots span.on { background: #4da3ff; transform: scale(1.35); box-shadow: 0 0 12px #2a7cff; }
+.hint {
+  position: absolute; top: 14%; left: 0; right: 0; text-align: center;
+  font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
+  color: rgba(150, 185, 245, .42);
+}
+@keyframes stateIn {
+  from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+@media (prefers-reduced-motion: reduce) { .state { animation: none; } }
