@@ -19,16 +19,21 @@ type Step = {
 
 // Tap anywhere to move to the next state. The glow transitions smoothly.
 const STEPS: Step[] = [
-  { open: false, phase: "idle", title: "Ready", sub: "Call not started", next: "Start call" },
-  { open: true, phase: "listening", title: "Listening", sub: "Clyra is hearing you", next: "Clyra thinks" },
-  { open: true, phase: "thinking", title: "Thinking", sub: "Working on a reply", next: "Clyra speaks" },
-  { open: true, phase: "speaking", title: "Speaking", sub: "Clyra is talking", next: "Interrupt" },
-  { open: true, phase: "listening", title: "Interrupted", sub: "Back to listening", next: "End call" },
-  { open: false, phase: "idle", title: "Call ended", sub: "The glow settles and fades", next: "Start again" },
+  { open: false, phase: "idle", title: "Ready", sub: "Call not started", next: "start the call" },
+  { open: true, phase: "listening", title: "Listening", sub: "Clyra is hearing you", next: "let Clyra think" },
+  { open: true, phase: "thinking", title: "Thinking", sub: "Working on a reply", next: "let Clyra speak" },
+  { open: true, phase: "speaking", title: "Speaking", sub: "Clyra is talking", next: "interrupt Clyra" },
+  { open: true, phase: "listening", title: "Interrupted", sub: "Back to listening", next: "end the call" },
+  { open: false, phase: "idle", title: "Call ended", sub: "The glow settles and fades", next: "start again" },
 ];
 
 export function App() {
-  const [i, setI] = useState(0);
+  // ?phase=listening|thinking|speaking starts directly in that state.
+  const [i, setI] = useState(() => {
+    const q = new URLSearchParams(location.search).get("phase");
+    const idx = STEPS.findIndex((s) => s.open && s.phase === q);
+    return idx > 0 ? idx : 0;
+  });
   const step = STEPS[i];
 
   const speaking = step.open && step.phase === "speaking";
@@ -50,15 +55,17 @@ export function App() {
         aria-label={`${step.title}. Tap to ${step.next}`}
       >
         <div className="state" key={i}>
-          <div className="state__dots" aria-hidden="true">
-            {STEPS.slice(0, 5).map((_, d) => (
-              <span key={d} className={d === Math.min(i, 4) ? "on" : ""} />
-            ))}
-          </div>
           <h1>{step.title}</h1>
           <p>{step.sub}</p>
         </div>
-        <div className="hint">Tap to: {step.next}</div>
+        <div className="hint" key={"h" + i}>
+          <span>Tap to {step.next}</span>
+        </div>
+        <div className="dots" aria-hidden="true">
+          {STEPS.slice(0, 5).map((_, d) => (
+            <span key={d} className={d === Math.min(i, 4) ? "on" : ""} />
+          ))}
+        </div>
       </main>
       <ClyraCallGlow
         open={step.open}
