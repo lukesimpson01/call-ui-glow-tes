@@ -18,6 +18,12 @@ type Props = {
    * boundary). Refines timing only; the TTS amplitude stays the main driver.
    */
   getWordPulse?: () => number;
+  /**
+   * Listening holds the glow at one steady height (0–1) regardless of mic
+   * volume. Pass null to make listening follow `getMicLevel` instead.
+   * @default 0.5
+   */
+  listeningLevel?: number | null;
 };
 
 // Blue / cyan only.
@@ -43,6 +49,7 @@ export function ClyraCallGlow({
   getMicLevel,
   getTtsLevel,
   getWordPulse,
+  listeningLevel = 0.5,
 }: Props) {
   const hostRef = useRef<HTMLDivElement>(null);
   const phaseRef = useRef(phase);
@@ -60,6 +67,8 @@ export function ClyraCallGlow({
   micRef.current = getMicLevel;
   ttsRef.current = getTtsLevel;
   pulseRef.current = getWordPulse;
+  const listeningLevelRef = useRef(listeningLevel);
+  listeningLevelRef.current = listeningLevel;
   const reducedMotionRef = useRef(reducedMotion);
   reducedMotionRef.current = reducedMotion;
   const openRef = useRef(open);
@@ -113,7 +122,10 @@ export function ClyraCallGlow({
     m.calm += ((openRef.current ? 1 : 0.15) - m.calm) * (1 - Math.exp(-dt * 5));
 
     let v = 0;
-    if (m.mic > 0.002) v += clamp(micRef.current?.() ?? 0) * m.mic;
+    if (m.mic > 0.002) {
+      const steady = listeningLevelRef.current;
+      v += clamp(steady ?? micRef.current?.() ?? 0) * m.mic;
+    }
     if (m.tts > 0.002) {
       const tts = clamp(ttsRef.current?.() ?? 0);
       const pulse = clamp(pulseRef.current?.() ?? 0);
@@ -146,23 +158,23 @@ export function ClyraCallGlow({
       !reducedMotionRef.current;
 
     const slowFlow =
-      Math.sin(now * 0.68) * 0.7 +
-      Math.sin(now * 0.31 + 1.4) * 0.2 +
-      Math.sin(now * 1.13 + 0.4) * 0.1;
+      Math.sin(now * 0.52) * 0.72 +
+      Math.sin(now * 0.27 + 1.4) * 0.22 +
+      Math.sin(now * 0.91 + 0.4) * 0.06;
     const breathing =
       Math.sin(now * 0.82) * 0.08 + Math.sin(now * 1.37) * 0.035;
 
     const target = thinking
       ? {
           gather: 0.26 + breathing * 1.4,
-          offset: slowFlow * 0.7,
+          offset: slowFlow * 0.95,
           stretch: 0.62 + Math.sin(now * 0.57) * 0.15,
           heldLevel: 0.7 + Math.sin(now * 0.91) * 0.09 + Math.sin(now * 0.43 + 2) * 0.05,
         }
       : { gather: 0, offset: 0, stretch: 0, heldLevel: 0 };
 
     // Slower ease out of thinking so the hand-off to listening/speaking is soft.
-    const ease = 1 - Math.exp(-dt * 4.2);
+    const ease = 1 - Math.exp(-dt * 2.4);
     state.gather += (target.gather - state.gather) * ease;
     state.offset += (target.offset - state.offset) * ease;
     state.stretch += (target.stretch - state.stretch) * ease;
@@ -219,6 +231,8 @@ export function ClyraCallGlow({
           attack={speaking ? 0.06 : 0.09}
           release={speaking ? 0.22 : 0.3}
           idle={0.3}
+          // Listening stays perfectly steady: no per-band lobe movement.
+          bands={phase !== "listening"}
           reach={2.4}
           spread={1.2}
           flow={38}
