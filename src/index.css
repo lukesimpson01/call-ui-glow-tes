@@ -2,7 +2,7 @@ html, body, #root { margin: 0; height: 100%; }
 body {
   background: #05070d;
   overflow: hidden;
-  color: #eaf2ff;
+  color: #fff;
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", system-ui, sans-serif;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
@@ -14,6 +14,8 @@ body {
 }
 .state {
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
   padding: 0 24px;
   animation: stateIn 650ms cubic-bezier(.22, 1, .36, 1) both;
 }
@@ -22,13 +24,12 @@ body {
   font-weight: 300;
   font-size: clamp(38px, 7vw, 68px);
   letter-spacing: -0.02em;
-  background: linear-gradient(180deg, #fff 0%, #9cc6ff 100%);
-  -webkit-background-clip: text; background-clip: text; color: transparent;
+  color: #fff;
 }
 .state p {
   margin: 12px 0 0;
   font-size: clamp(15px, 2.2vw, 18px);
-  color: rgba(170, 200, 255, .62);
+  color: rgba(255, 255, 255, .82);
   letter-spacing: .01em;
 }
 .state__dots { display: flex; gap: 8px; justify-content: center; margin-bottom: 26px; }
@@ -41,7 +42,7 @@ body {
 .hint {
   position: absolute; top: 14%; left: 0; right: 0; text-align: center;
   font-size: 13px; letter-spacing: .14em; text-transform: uppercase;
-  color: rgba(150, 185, 245, .42);
+  color: rgba(255, 255, 255, .55);
 }
 @keyframes stateIn {
   from { opacity: 0; transform: translateY(10px); filter: blur(6px); }
