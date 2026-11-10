@@ -4,7 +4,12 @@ import { VoiceBeam } from "voice-glow";
 import type { VoiceBeamMotion } from "voice-glow";
 import "./ClyraCallGlow.css";
 
-export type CallPhase = "idle" | "listening" | "thinking" | "speaking";
+export type CallPhase =
+  | "idle"
+  | "activated"
+  | "listening"
+  | "thinking"
+  | "speaking";
 
 type Props = {
   open: boolean;
@@ -38,6 +43,19 @@ const BLUE_COLORS = [
 ];
 
 const EXIT_MS = 650;
+
+/**
+ * Glow heights, tuned to the reference states (measured as a share of screen
+ * height): activated ~10%, listening ~15%, thinking ~18%, talking ~25%
+ * (peaks ~30%). Values are VoiceBeam levels (0-1) that produce those heights.
+ */
+const LEVELS = {
+  activated: 0.045, // thin line along the bottom
+  listening: 0.105, // steady
+  thinking: 0.185, // + slow wobble, plus the moving waves from motion()
+  speakFloor: 0.105, // pauses settle to the listening height, never off
+  speakRange: 0.55, // + voice amplitude on top
+};
 
 function clamp(value: number) {
   return Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
@@ -104,7 +122,7 @@ export function ClyraCallGlow({
   }, []);
 
   // Per-frame state lives in refs: no React renders for audio frames.
-  const mix = useRef({ last: 0, mic: 0, tts: 0, calm: 1 });
+  const mix = useRef({ last: 0, base: 0, tts: 0, calm: 1 });
 
   // VoiceBeam samples this every animation frame.
   const level = useCallback(() => {
@@ -114,23 +132,36 @@ export function ClyraCallGlow({
     m.last = now;
 
     const p = phaseRef.current;
-    // Crossfade sources so an interruption (speaking -> listening) glides.
-    const k = 1 - Math.exp(-dt * 9);
-    m.mic += ((p === "listening" ? 1 : 0) - m.mic) * k;
-    m.tts += ((p === "speaking" ? 1 : 0) - m.tts) * k;
+    // The steady height glides between states (never snaps), including the
+    // speaking -> listening interruption.
+    let baseTarget = 0;
+    if (p === "activated") baseTarget = LEVELS.activated;
+    else if (p === "listening") {
+      const steady = listeningLevelRef.current;
+      baseTarget =
+        steady === null
+          ? LEVELS.listening + clamp(micRef.current?.() ?? 0) * 0.3
+          : LEVELS.listening;
+    } else if (p === "speaking") baseTarget = LEVELS.speakFloor;
+    else if (p === "thinking") {
+      // Slow, layered swell so the whole glow breathes and never repeats.
+      baseTarget =
+        LEVELS.thinking +
+        Math.sin(now * 0.6) * 0.05 +
+        Math.sin(now * 0.37 + 1.1) * 0.04 +
+        Math.sin(now * 1.05 + 2.3) * 0.015;
+    }
+    m.base += (baseTarget - m.base) * (1 - Math.exp(-dt * 3.2));
+    m.tts += ((p === "speaking" ? 1 : 0) - m.tts) * (1 - Math.exp(-dt * 9));
     // Closing: calm the waves before the fade completes.
     m.calm += ((openRef.current ? 1 : 0.15) - m.calm) * (1 - Math.exp(-dt * 5));
 
-    let v = 0;
-    if (m.mic > 0.002) {
-      const steady = listeningLevelRef.current;
-      v += clamp(steady ?? micRef.current?.() ?? 0) * m.mic;
-    }
+    let v = m.base;
     if (m.tts > 0.002) {
       const tts = clamp(ttsRef.current?.() ?? 0);
       const pulse = clamp(pulseRef.current?.() ?? 0);
       // Amplitude leads; word boundaries add a tight accent on top.
-      v += clamp(tts + pulse * 0.22 * (0.4 + tts)) * m.tts;
+      v += clamp(tts + pulse * 0.2 * (0.4 + tts)) * LEVELS.speakRange * m.tts;
     }
     return clamp(v * m.calm);
   }, []);
@@ -166,10 +197,13 @@ export function ClyraCallGlow({
 
     const target = thinking
       ? {
-          gather: 0.26 + breathing * 1.4,
+          gather: 0.12 + breathing * 0.8,
           offset: slowFlow * 0.95,
-          stretch: 0.62 + Math.sin(now * 0.57) * 0.15,
-          heldLevel: 0.7 + Math.sin(now * 0.91) * 0.09 + Math.sin(now * 0.43 + 2) * 0.05,
+          stretch: 0.5 + Math.sin(now * 0.57) * 0.15,
+          heldLevel:
+            LEVELS.thinking +
+            Math.sin(now * 0.91) * 0.04 +
+            Math.sin(now * 0.43 + 2) * 0.03,
         }
       : { gather: 0, offset: 0, stretch: 0, heldLevel: 0 };
 
@@ -189,7 +223,18 @@ export function ClyraCallGlow({
   }, []);
 
   // Extend the library's phone-sized geometry across the whole window.
-  const horizontalScale = Math.min(5, Math.max(1, width / 390));
+  // Heights follow screen height (so 15% stays 15% on any device); widths
+  // follow screen width.
+  const [vh, setVh] = useState(() =>
+    typeof window === "undefined" ? 844 : window.innerHeight
+  );
+  useEffect(() => {
+    const on = () => setVh((v) => (Math.abs(v - window.innerHeight) > 8 ? window.innerHeight : v));
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, []);
+  const scale = Math.min(1.6, Math.max(0.7, vh / 844));
+  const horizontalScale = Math.min(5, Math.max(1, width / (390 * scale)));
   const speaking = phase === "speaking";
 
   return createPortal(
@@ -203,39 +248,39 @@ export function ClyraCallGlow({
       <div className="clyra-voice-glow__beam">
         <VoiceBeam
           type="mobile"
+          scale={scale}
           borderRadius={0}
-          theme="dark"
+          theme={"light"}
           active={beamActive}
           level={level}
           motion={motion}
           colorVariant="ice"
           colors={BLUE_COLORS}
           bandColors={{
-            core: "#8CC8FF",
-            above: "#B8DAFF",
-            mid: "#338FFF",
-            below: "#083DA8",
+            core: "#3F8CFF",
+            above: "#8DBBFF",
+            mid: "#2A73FF",
+            below: "#1747C9",
           }}
           staticColors={true}
-          // Brightness stays low on purpose: >1.2 clips the blue channel and
-          // pushes the light toward cyan/teal. Intensity comes from opacity.
-          brightness={1.05}
-          saturation={1.3}
-          bloomOpacity={2.2}
-          innerOpacity={2.0}
+          // Brightness stays low on purpose; intensity comes from layer opacity.
+          brightness={0.92}
+          saturation={1.7}
+          bloomOpacity={2.4}
+          innerOpacity={2.2}
           strokeOpacity={1.2}
-          strength={0.95}
+          strength={1}
           sensitivity={3.1}
           threshold={0.012}
           // Tighter response while speaking so syllables read; calmer otherwise.
           attack={speaking ? 0.06 : 0.09}
           release={speaking ? 0.22 : 0.3}
-          idle={0.3}
-          // Listening stays perfectly steady: no per-band lobe movement.
-          bands={phase !== "listening"}
-          reach={2.4}
+          idle={0.12}
+          // Bands drive lobes only while talking; elsewhere the glow stays full-width.
+          bands={phase === "speaking"}
+          reach={3}
           spread={1.2}
-          flow={38}
+          flow={phase === "thinking" ? 70 : 38}
           bend={52}
           glowWidth={1.1 * horizontalScale}
           lobeSpacing={1.05 * horizontalScale}

@@ -37,7 +37,7 @@ function ensureCtx() {
   ttsAnalyser.smoothingTimeConstant = 0;
   ttsAnalyser.connect(master);
   master.connect(ctx.destination);
-  ttsGetter = createAudioLevelGetter(ttsAnalyser, 5.5);
+  ttsGetter = createAudioLevelGetter(ttsAnalyser, 8);
   return ctx;
 }
 
